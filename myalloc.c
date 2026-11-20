@@ -36,3 +36,44 @@ static block_t *head = NULL;
 static block_t *tail = NULL;
 static size_t total_heap_bytes = 0;
 static fit_policy_t current_policy = FIT_FIRST;
+
+static block_t *grow(size_t need) {
+    void *cur = sbrk(0);
+    if (cur == (void *)-1) {
+        return NULL;
+    }
+
+    uintptr_t cur_addr = (uintptr_t)cur;
+    uintptr_t payload_unaligned = cur_addr + HDR;
+    size_t pad = (ALIGNMENT - (payload_unaligned % ALIGNMENT)) % ALIGNMENT;
+
+    size_t block_total = HDR + need;
+    if (block_total < GROW_MIN_BYTES) {
+        block_total = GROW_MIN_BYTES;
+    }
+    block_total = align_up(block_total);
+
+    size_t total_req = pad + block_total;
+    void *raw = sbrk((intptr_t)total_req);
+    if (raw == (void *)-1) {
+        return NULL;
+    }
+
+    total_heap_bytes += total_req;
+
+    block_t *b = (block_t *)((char *)raw + pad);
+    b->size = block_total - HDR;
+    b->next = NULL;
+    b->free = 1;
+    b->magic = BLOCK_MAGIC;
+
+    if (head == NULL) {
+        head = b;
+        tail = b;
+    } else {
+        tail->next = b;
+        tail = b;
+    }
+
+    return b;
+}
