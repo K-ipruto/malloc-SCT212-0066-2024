@@ -195,3 +195,19 @@ void my_free(void *ptr) {
     b->free = 1;
     coalesce();
 }
+
+void *my_calloc(size_t nmemb, size_t size) {
+    if (nmemb == 0 || size == 0) {
+        return NULL;
+    }
+    if (size > SIZE_MAX / nmemb) {
+        return NULL;
+    }
+
+    size_t total = nmemb * size;
+    void *ptr = my_malloc(total);
+    if (ptr != NULL) {
+        memset(ptr, 0, total);
+    }
+    return ptr;
+}
