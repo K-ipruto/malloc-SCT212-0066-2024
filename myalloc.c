@@ -280,3 +280,46 @@ void *my_realloc(void *ptr, size_t size) {
     my_free(ptr);
     return new_ptr;
 }
+
+void heap_stats(heap_stats_t *out) {
+    if (out == NULL) {
+        return;
+    }
+
+    memset(out, 0, sizeof(*out));
+    out->heap_bytes = total_heap_bytes;
+
+    block_t *cur = head;
+    while (cur != NULL) {
+        out->blocks++;
+        if (cur->free) {
+            out->free_blocks++;
+            out->free_bytes += cur->size;
+            if (cur->size > out->largest_free) {
+                out->largest_free = cur->size;
+            }
+        } else {
+            out->used_bytes += cur->size;
+        }
+        cur = cur->next;
+    }
+}
+
+void heap_dump(void) {
+    char buf[160];
+    int idx = 0;
+    block_t *cur = head;
+
+    while (cur != NULL) {
+        int n = snprintf(buf, sizeof(buf), "[%d] %p size=%zu %s\n",
+                         idx, payload(cur), cur->size,
+                         cur->free ? "FREE" : "USED");
+        if (n > 0) {
+            size_t len = (size_t)n < sizeof(buf) ? (size_t)n : sizeof(buf) - 1;
+            ssize_t ignored = write(STDERR_FILENO, buf, len);
+            (void)ignored;
+        }
+        idx++;
+        cur = cur->next;
+    }
+}
