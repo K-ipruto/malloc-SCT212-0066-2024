@@ -77,3 +77,32 @@ static block_t *grow(size_t need) {
 
     return b;
 }
+
+static block_t *find_fit(size_t need) {
+    block_t *cur = head;
+    while (cur != NULL) {
+        if (cur->free && cur->size >= need) {
+            return cur;
+        }
+        cur = cur->next;
+    }
+    return NULL;
+}
+
+void *my_malloc(size_t size) {
+    if (size == 0) {
+        return NULL;
+    }
+
+    size_t need = align_up(size);
+    block_t *b = find_fit(need);
+    if (b == NULL) {
+        b = grow(need);
+        if (b == NULL) {
+            return NULL;
+        }
+    }
+
+    b->free = 0;
+    return payload(b);
+}
