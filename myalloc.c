@@ -323,3 +323,40 @@ void heap_dump(void) {
         cur = cur->next;
     }
 }
+
+int heap_check(void) {
+    if (head == NULL) {
+        return tail == NULL ? 1 : 0;
+    }
+
+    block_t *cur = head;
+    block_t *last = NULL;
+
+    while (cur != NULL) {
+        if (cur->magic != BLOCK_MAGIC) {
+            return 0;
+        }
+        if (cur->free != 0 && cur->free != 1) {
+            return 0;
+        }
+        if ((uintptr_t)payload(cur) % ALIGNMENT != 0) {
+            return 0;
+        }
+        if (cur->size == 0 || cur->size % ALIGNMENT != 0) {
+            return 0;
+        }
+        if (cur->next != NULL) {
+            uintptr_t end_addr = (uintptr_t)payload(cur) + cur->size;
+            if ((uintptr_t)cur->next < end_addr) {
+                return 0;
+            }
+            if (cur->free && cur->next->free && is_physically_adjacent(cur, cur->next)) {
+                return 0;
+            }
+        }
+        last = cur;
+        cur = cur->next;
+    }
+
+    return (last == tail) ? 1 : 0;
+}
