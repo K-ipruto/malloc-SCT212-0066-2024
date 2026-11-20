@@ -126,3 +126,50 @@ void *my_malloc(size_t size) {
     b->free = 0;
     return payload(b);
 }
+
+static void write_err(const char *msg) {
+    size_t len = 0;
+    while (msg[len] != '\0') {
+        len++;
+    }
+    ssize_t ignored = write(STDERR_FILENO, msg, len);
+    (void)ignored;
+}
+
+static int is_valid_block(block_t *target) {
+    if (target == NULL || head == NULL) {
+        return 0;
+    }
+    block_t *cur = head;
+    while (cur != NULL) {
+        if (cur == target) {
+            return cur->magic == BLOCK_MAGIC;
+        }
+        cur = cur->next;
+    }
+    return 0;
+}
+
+void my_free(void *ptr) {
+    if (ptr == NULL) {
+        return;
+    }
+
+    if ((uintptr_t)ptr % ALIGNMENT != 0) {
+        write_err("my_free: invalid pointer\n");
+        return;
+    }
+
+    block_t *b = header(ptr);
+    if (!is_valid_block(b)) {
+        write_err("my_free: invalid pointer\n");
+        return;
+    }
+
+    if (b->free) {
+        write_err("my_free: double free detected\n");
+        return;
+    }
+
+    b->free = 1;
+}
