@@ -89,6 +89,25 @@ static block_t *find_fit(size_t need) {
     return NULL;
 }
 
+static void split_block(block_t *b, size_t need) {
+    if (b->size < need + HDR + MIN_SPLIT_PAYLOAD) {
+        return;
+    }
+
+    block_t *rem = (block_t *)((char *)payload(b) + need);
+    rem->size = b->size - need - HDR;
+    rem->next = b->next;
+    rem->free = 1;
+    rem->magic = BLOCK_MAGIC;
+
+    b->size = need;
+    b->next = rem;
+
+    if (tail == b) {
+        tail = rem;
+    }
+}
+
 void *my_malloc(size_t size) {
     if (size == 0) {
         return NULL;
@@ -103,6 +122,7 @@ void *my_malloc(size_t size) {
         }
     }
 
+    split_block(b, need);
     b->free = 0;
     return payload(b);
 }
