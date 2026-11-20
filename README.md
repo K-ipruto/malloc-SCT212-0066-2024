@@ -85,9 +85,9 @@ If the addresses do not match, the blocks are not merged.
 This prevents our allocator from accidentally combining memory that does not belong to it.
 
 ## Known Limitations
-+ Single-threaded only: The allocator is designed for one thread. It does not use mutexes to protect shared variables such as head, tail, and sbrk(). Therefore, simultaneous calls from multiple threads may cause problems.
-+ O(n) searching and coalescing: Both my_malloc() and my_free() may need to go through the entire linked list to find suitable blocks or combine free blocks. This can become slow when there are many blocks.
-+ No heap shrinking: The allocator does not return unused memory at the end of the heap to the operating system. Instead, it keeps the free memory so that it can be reused for future allocations.
+* Single-threaded only: The allocator is designed for one thread. It does not use mutexes to protect shared variables such as head, tail, and sbrk(). Therefore, simultaneous calls from multiple threads may cause problems.
+* O(n) searching and coalescing: Both my_malloc() and my_free() may need to go through the entire linked list to find suitable blocks or combine free blocks. This can become slow when there are many blocks.
+* No heap shrinking: The allocator does not return unused memory at the end of the heap to the operating system. Instead, it keeps the free memory so that it can be reused for future allocations.
 
 ## Sources and AI Tool Declaration
 Course Materials:
