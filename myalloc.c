@@ -150,6 +150,27 @@ static int is_valid_block(block_t *target) {
     return 0;
 }
 
+static int is_physically_adjacent(block_t *a, block_t *b) {
+    return (char *)payload(a) + a->size == (char *)b;
+}
+
+static void coalesce(void) {
+    block_t *cur = head;
+    while (cur != NULL && cur->next != NULL) {
+        if (cur->free && cur->next->free && is_physically_adjacent(cur, cur->next)) {
+            block_t *nxt = cur->next;
+            cur->size += HDR + nxt->size;
+            cur->next = nxt->next;
+            nxt->magic = 0;
+            if (tail == nxt) {
+                tail = cur;
+            }
+        } else {
+            cur = cur->next;
+        }
+    }
+}
+
 void my_free(void *ptr) {
     if (ptr == NULL) {
         return;
@@ -172,4 +193,5 @@ void my_free(void *ptr) {
     }
 
     b->free = 1;
+    coalesce();
 }
