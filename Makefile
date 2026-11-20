@@ -11,3 +11,7 @@ clean:
 bench: myalloc.c bench.c myalloc.h
 	$(CC) $(CFLAGS) -o bench myalloc.c bench.c
 	./bench
+
+bench: myalloc.c bench.c myalloc.h
+	$(CC) $(CFLAGS) -o bench myalloc.c bench.c
+	./bench
