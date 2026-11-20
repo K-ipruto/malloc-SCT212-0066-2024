@@ -211,3 +211,50 @@ void *my_calloc(size_t nmemb, size_t size) {
     }
     return ptr;
 }
+
+void *my_realloc(void *ptr, size_t size) {
+    if (ptr == NULL) {
+        return my_malloc(size);
+    }
+    if (size == 0) {
+        my_free(ptr);
+        return NULL;
+    }
+    if ((uintptr_t)ptr % ALIGNMENT != 0) {
+        return NULL;
+    }
+
+    block_t *b = header(ptr);
+    if (!is_valid_block(b) || b->free) {
+        return NULL;
+    }
+
+    size_t need = align_up(size);
+    if (b->size >= need) {
+        split_block(b, need);
+        return ptr;
+    }
+
+    if (b->next != NULL && b->next->free && is_physically_adjacent(b, b->next) &&
+        (b->size + HDR + b->next->size >= need)) {
+        block_t *nxt = b->next;
+        b->size += HDR + nxt->size;
+        b->next = nxt->next;
+        nxt->magic = 0;
+        if (tail == nxt) {
+            tail = b;
+        }
+        split_block(b, need);
+        return ptr;
+    }
+
+    void *new_ptr = my_malloc(size);
+    if (new_ptr == NULL) {
+        return NULL;
+    }
+
+    size_t copy_bytes = b->size < size ? b->size : size;
+    memcpy(new_ptr, ptr, copy_bytes);
+    my_free(ptr);
+    return new_ptr;
+}
