@@ -80,13 +80,35 @@ static block_t *grow(size_t need) {
 
 static block_t *find_fit(size_t need) {
     block_t *cur = head;
+    if (current_policy == FIT_FIRST) {
+        while (cur != NULL) {
+            if (cur->free && cur->size >= need) {
+                return cur;
+            }
+            cur = cur->next;
+        }
+        return NULL;
+    }
+
+    block_t *best = NULL;
     while (cur != NULL) {
         if (cur->free && cur->size >= need) {
-            return cur;
+            if (best == NULL || cur->size < best->size) {
+                best = cur;
+                if (best->size == need) {
+                    break;
+                }
+            }
         }
         cur = cur->next;
     }
-    return NULL;
+    return best;
+}
+
+void set_policy(fit_policy_t p) {
+    if (p == FIT_FIRST || p == FIT_BEST) {
+        current_policy = p;
+    }
 }
 
 static void split_block(block_t *b, size_t need) {
